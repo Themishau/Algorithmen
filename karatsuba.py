@@ -2,38 +2,52 @@
 
  
 
-def karatsuba_mul(a, b):
-    if a==0 or b==0:
+def karatsuba_mul(zahla, zahlb):
+    #negative Eingaben erstmal ignoriert
+    if zahla == 0 or zahlb == 0:
         return 0
-    m=max(a.bit_length(), b.bit_length())
-    if m<=8:
-        return a*b
+
+    max_bit = max(zahla.bit_length(), zahlb.bit_length())
+    if max_bit <= 8:
+        return zahla * zahlb
+    # auf Basis der Dezimalzahl auch möglich. 
+    #m=min(zahla, zahlb)
+    #if m == 1:
+    #    return zahla * zahlb
+    
+
+
     else:
-        k=m//2
-        print(m)
-        print(k)
-        a1=a>>k # a / pow(2,k) 
-        print(a)
-        print(a1)
-        print(a>>k)
-        a0=a & (1<<k)-1 
-        print(a0)
-        print(a & (1<<k)-1) 
-        b1=b>>k
-        print(b)
-        print(b1)
-        print(b>>k)
-        b0=b & (1<<k)-1
-        print(b0)
-        print(b & (1<<k)-1) 
+        mitte = max_bit//2
+        print(max_bit)
+        print(mitte)
+        zahla_shifted = zahla >> mitte # zahla / pow(2,mitte) 
+        print(zahla)
+        print(zahla_shifted)
+        print(zahla >> mitte)
+        zahla_shifted_b = zahla & ( 1 << mitte ) -1 
+        print(zahla_shifted_b)
+        print(zahla & ( 1 << mitte ) -1 ) 
 
+        zahlb_shifted = zahlb >> mitte
+        print(zahlb)
+        print(zahlb_shifted)
+        print(zahlb >> mitte)
+        zahlb_shifted_b = zahlb & ( 1 << mitte ) -1
+        print(zahlb_shifted_b)
+        print(zahlb & ( 1 << mitte ) -1 ) 
 
-        p2=karatsuba_mul(a1, b1)
-        p1=karatsuba_mul(a1+a0, b1+b0)
-        p0=karatsuba_mul(a0, b0)
-        c2=p2 << 2*k
-        c1=p1-p2-p0 << k
+        #rekursion 
+        p2=karatsuba_mul(zahla_shifted, zahlb_shifted)
+        p1=karatsuba_mul(zahla_shifted + zahla_shifted_b, zahlb_shifted + zahlb_shifted_b )
+        p0=karatsuba_mul(zahla_shifted_b, zahlb_shifted_b)
+        
+        c2=p2 << 2* mitte
+        
+        c1=p1-p2-p0 << mitte
+        #carry bit
         c0=p0
+
         return c2+c1+c0
 
 if __name__ == '__main__':
@@ -45,11 +59,15 @@ if __name__ == '__main__':
     print(bin(1>>1))
     print (1 << 1)
     print(bin(1<<1))  
-
+    print (1 & 1)
+    print(bin(1&1)) 
+    print("######")
     print(8 >> 1)
     print(bin(8>>1))
     print (8 << 1)
     print(bin(8<<1)) 
+    print (8 & 10)
+    print(bin(8&1)) 
 
     print (a, b)
     print (a*b)
