@@ -275,7 +275,7 @@ class Interpreter(NodeVisitor):
 def main():
     while True:
         try:
-            text = input('spi> ')
+            text = "5 + 5"
         except EOFError:
             break
         if not text:
