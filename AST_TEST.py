@@ -36,7 +36,7 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-g
+
 class Lexer(object):
     def __init__(self, text):
         # client string input, e.g. "4 + 2 * 3 - 6 / 2"
