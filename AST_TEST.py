@@ -1,4 +1,3 @@
-""" SPI - Simple Pascal Interpreter """
 
 ###############################################################################
 #                                                                             #
@@ -37,13 +36,13 @@ class Token(object):
         return self.__str__()
 
 
-class Lexer(object):
+class Lexer:
     def __init__(self, text):
-        # client string input, e.g. "4 + 2 * 3 - 6 / 2"
         self.text = text
-        # self.pos is an index into self.text
         self.pos = 0
         self.current_char = self.text[self.pos]
+        print(self.text)
+
 
     def error(self):
         raise Exception('Invalid character')
@@ -51,6 +50,7 @@ class Lexer(object):
     def advance(self):
         """Advance the `pos` pointer and set the `current_char` variable."""
         self.pos += 1
+        print("lol?")
         if self.pos > len(self.text) - 1:
             self.current_char = None  # Indicates end of input
         else:
@@ -72,7 +72,7 @@ class Lexer(object):
         """Lexical analyzer (also known as scanner or tokenizer)
 
         This method is responsible for breaking a sentence
-        apart into token_operator_dict. One token at a time.
+        apart into tokens. One token at a time.
         """
         while self.current_char is not None:
 
@@ -121,41 +121,17 @@ class Lexer(object):
 class AST(object):
     pass
 
-class Program(AST):
-    """Represents a 'Program' block"""
-    def __init__(self):
-        self.children = []
-
-class Assign(AST):
-    def __init__(self, left, op, right):
-        self.left = left
+class UnaryOp(AST):
+    def __init__(self, op, expr):
         self.token = self.op = op
-        self.right = right
-
-class Var(AST):
-    """The Var node is constructed out of ID token."""
-    def __init__(self, token):
-        self.token = token
-        self.value = token.value
+        self.expr = expr
 
 class BinOp(AST):
     def __init__(self, left, op, right):
         self.left = left
         self.token = self.op = op
         self.right = right
-    
-    def __str__(self):
-        """String representation of the class instance.
-        Examples:
-        """
-        return 'BinOp({left}, {token}, {op}, {right})'.format(
-            left = repr(self.left),
-            token = self.token,
-            op = self.op,
-            right = repr(self.right))
 
-    def __repr__(self):
-        return self.__str__()
 
 class Num(AST):
     def __init__(self, token):
@@ -185,7 +161,15 @@ class Parser(object):
     def factor(self):
         """factor : INTEGER | LPAREN expr RPAREN"""
         token = self.current_token
-        if token.type == INTEGER:
+        if token.type == PLUS:
+            self.eat(PLUS)
+            node = UnaryOp(token, self.factor())
+            return node
+        elif token.type == MINUS:
+            self.eat(MINUS)
+            node = UnaryOp(token, self.factor())
+            return node
+        elif token.type == INTEGER:
             self.eat(INTEGER)
             return Num(token)
         elif token.type == LPAREN:
@@ -219,14 +203,13 @@ class Parser(object):
 
         while self.current_token.type in (PLUS, MINUS):
             token = self.current_token
-            print(token)
             if token.type == PLUS:
                 self.eat(PLUS)
             elif token.type == MINUS:
                 self.eat(MINUS)
 
             node = BinOp(left=node, op=token, right=self.term())
-            print (node)
+
         return node
 
     def parse(self):
@@ -263,30 +246,29 @@ class Interpreter(NodeVisitor):
         elif node.op.type == DIV:
             return self.visit(node.left) / self.visit(node.right)
 
+    def visit_UnaryOp(self, node):
+        op = node.op.type
+        if op == PLUS:
+            return +self.visit(node.expr)
+        elif op == MINUS:
+            return -self.visit(node.expr)
+
     def visit_Num(self, node):
-        return node.value
+        return node.token
 
     def interpret(self):
         tree = self.parser.parse()
-        print(tree)
-        # return self.visit(tree)
+        return self.visit(tree)
 
 
 def main():
-    while True:
-        try:
-            text = "5 + 5"
-        except EOFError:
-            break
-        if not text:
-            continue
-
-        lexer = Lexer(text)
-        parser = Parser(lexer)
-        interpreter = Interpreter(parser)
-        interpreter.interpret()
-        #result = interpreter.interpret()
-        #print(result)
+    text = "1+3+4+(5+--6)"
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    interpreter = Interpreter(parser)
+    result = interpreter.interpret()
+    print(result)
+    print("finished")
 
 
 if __name__ == '__main__':
