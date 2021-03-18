@@ -523,6 +523,8 @@ class Parser:
     def type_spec(self):
         """type_spec : INTEGER
                      | REAL
+
+
         """
         token = self.current_token
         if self.current_token.type == TokenType.INTEGER:
@@ -534,7 +536,7 @@ class Parser:
 
     def compound_statement(self):
         """
-        compound_statement: BEGIN statement_list END
+        compound_statement:  statement_list end .
         """
         self.eat(TokenType.BEGIN)
         nodes = self.statement_list()
@@ -896,6 +898,7 @@ class SemanticAnalyzer(NodeVisitor):
     def __init__(self):
         self.current_scope = None
 
+
     def log(self, msg):
         if _SHOULD_LOG_SCOPE:
             print(msg)
@@ -1213,26 +1216,26 @@ class Interpreter(NodeVisitor):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='SPI - Simple Pascal Interpreter'
-    )
-    parser.add_argument('inputfile', help='Pascal source file')
-    parser.add_argument(
-        '--scope',
-        help='Print scope information',
-        action='store_true',
-    )
-    parser.add_argument(
-        '--stack',
-        help='Print call stack',
-        action='store_true',
-    )
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(
+    #     description='SPI - Simple Pascal Interpreter'
+    # )
+    # parser.add_argument('inputfile', help='Pascal source file')
+    # parser.add_argument(
+    #     '--scope',
+    #     help='Print scope information',
+    #     action='store_true',
+    # )
+    # parser.add_argument(
+    #     '--stack',
+    #     help='Print call stack',
+    #     action='store_true',
+    # )
+    # args = parser.parse_args()
 
     global _SHOULD_LOG_SCOPE, _SHOULD_LOG_STACK
-    _SHOULD_LOG_SCOPE, _SHOULD_LOG_STACK = args.scope, args.stack
+    _SHOULD_LOG_SCOPE, _SHOULD_LOG_STACK = True, True
 
-    text = open(args.inputfile, 'r').read()
+    text = open("part19.pas", 'r').read()
 
     lexer = Lexer(text)
     try:

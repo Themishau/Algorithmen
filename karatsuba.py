@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
- 
 
 def karatsuba_mul(zahla, zahlb):
     #negative Eingaben erstmal ignoriert
