@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import messagebox
-from analyze import *
+from analyze import readData, preprare_data
+from observer import Publisher, Subscriber
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -11,8 +12,10 @@ import threading
 import time
 
 
-class Model:
-    def __init__(self):
+class Model(Publisher):
+    def __init__(self, events):
+        super().__init__(events)
+        self.publisher = Publisher(events)
         self.input_data = None
         self.datadict = None
         self.dataarray = None
@@ -53,10 +56,11 @@ class Model:
         await self.prepare_data()
 
 
-class Controller:
-    def __init__(self):
+class Controller(Subscriber):
+    def __init__(self, name):
+        super().__init__(name)
 
-        #init tk
+        # init tk
         self.root = tk.Tk()
 
         #init window size
@@ -66,14 +70,15 @@ class Controller:
         self.runningAsync = 0
 
         #init model and viewer
-        self.model = Model()
-        self.view = View(self.root, self.model)
+        #init model and viewer with publisher
+        self.model = Model(['data_changed', 'clear_data'])
+        self.view = View(self.root, self.model, ['start_button', 'close_button'], 'viewer')
 
-        self.view.main.mainStartButton.bind("<Button>", self.start)
-        self.view.main.quitButton.bind("<Button>", self.closeprogram)
+        #init Observer
+        self.view.register('start_button', self) # Achtung, sich selbst angeben und nicht self.controller
+        self.view.register('close_button', self)
 
-        # hidden and shown widgets
-        self.hiddenwidgets = {}
+
 
     def run(self):
         self.root.title("show plot")
@@ -82,7 +87,7 @@ class Controller:
         self.root.mainloop()
 
     def start(self, event):
-        self.hide_instance_attribute(self.view.canvas.get_tk_widget(), 'self.view.canvas.get_tk_widget()')
+        self.view.hide_instance_attribute(self.view.canvas.get_tk_widget(), 'self.canvas.get_tk_widget()')
         try:
             self.model.input_path = self.view.main.input_path.get()
         except FileNotFoundError:
@@ -100,29 +105,11 @@ class Controller:
         except ValueError:
             messagebox.showerror('Error', 'could not clear data, restart program')
         self.do_tasks()
+
         #todo am besten eine funktion starten, die diese infors kriegt und dann im view ändert
         self.view.canvas = FigureCanvasTkAgg(self.model.fig, master=self.view.frame)
-        self.show_instance_attribute('self.view.canvas.get_tk_widget()')
+        self.view.show_instance_attribute('self.view.canvas.get_tk_widget()')
 
-    #todo hide und show auch in view verschieben
-    def hide_instance_attribute(self, instance_attribute, widget_variablename):
-        print(instance_attribute)
-        self.hiddenwidgets[widget_variablename] = instance_attribute.grid_info()
-
-        instance_attribute.grid_remove()
-
-    def show_instance_attribute(self, widget_variablename):
-        try:
-            # gets the information stored in
-            widget_grid_information = self.hiddenwidgets[widget_variablename]
-            print(widget_grid_information)
-            # gets variable and sets grid
-            eval(widget_variablename).grid(row=widget_grid_information['row'], column=widget_grid_information['column'],
-                                           sticky=widget_grid_information['sticky'],
-                                           pady=widget_grid_information['pady'],
-                                           columnspan=widget_grid_information['columnspan'])
-        except:
-            messagebox.showerror('Error show_instance_attribute', 'contact developer')
 
     def closeprogram(self, event):
         self.root.destroy()
@@ -144,7 +131,6 @@ class Controller:
         self.model.fig, self.model.ax = createplot(self.model.datadict['x'], self.model.datadict['y'], self.model.datadict, self.model.output_path)
         self.pca, self.model.fig, self.model.ax = analyze_data(self.model.dataarray, self.model.fig, self.model.ax)
 
-
     def async_load_data(self):
         loop = asyncio.new_event_loop()
         self.runningAsync = self.runningAsync + 1
@@ -154,6 +140,61 @@ class Controller:
         self.runningAsync = self.runningAsync - 1
 
 
+class View(Publisher, Subscriber):
+    def __init__(self, parent, model, events, name):
+        super(View, events).__init__(name)
+
+        #init viewer
+        self.model = model
+        self.plt = Figure(figsize=(4, 4), dpi=100)
+        self.plt.add_subplot(111).plot([0,1, 2, 3, 4],[0,1,20,3,50])
+        self.frame = tk.Frame(parent)
+        self.frame.grid(sticky="NSEW")
+        self.main = Main(parent)
+        self.canvas = FigureCanvasTkAgg(self.plt, master=self.frame)
+        self.canvas.get_tk_widget().grid(row = 3, column = 0, sticky = tk.N, pady = 2, columnspan = 4)
+        self.canvas.draw()
+
+        #init Observer
+        self.model.register('data_changed', self) # Achtung, sich selbst angeben und nicht self.controller
+        self.model.register('clear_data', self)
+
+        # hidden and shown widgets
+        self.hiddenwidgets = {}
+
+
+        self.main.mainStartButton.bind("<Button>", self.start)
+        self.main.quitButton.bind("<Button>", self.closeprogram)
+
+
+    #todo hide und show auch in view verschieben
+    def hide_instance_attribute(self, instance_attribute, widget_variablename):
+        print(instance_attribute)
+        self.hiddenwidgets[widget_variablename] = instance_attribute.grid_info()
+
+        instance_attribute.grid_remove()
+
+    def show_instance_attribute(self, widget_variablename):
+        try:
+            # gets the information stored in
+            widget_grid_information = self.hiddenwidgets[widget_variablename]
+            print(widget_grid_information)
+            # gets variable and sets grid
+            eval(widget_variablename).grid(row=widget_grid_information['row'], column=widget_grid_information['column'],
+                                           sticky=widget_grid_information['sticky'],
+                                           pady=widget_grid_information['pady'],
+                                           columnspan=widget_grid_information['columnspan'])
+        except:
+            messagebox.showerror('Error show_instance_attribute', 'contact developer')
+
+    def start(self, event):
+        self.dispatch("start_button", "start button clicked! Notify subscriber!")
+
+    def closeprogram(self, event):
+        self.dispatch("close_button", "It's lunchtime!")
+
+    def closeprogrammenu(self):
+        self.dispatch("close_button", "It's lunchtime!")
 
 class Main(tk.Frame):
     def __init__(self, root, **kw):
@@ -189,16 +230,3 @@ class Main(tk.Frame):
         self.mainStartButton.grid(row = 7, column = 1, sticky = tk.N, pady = 0)
 
 
-
-class View():
-    def __init__(self, parent, model):
-        self.model = model
-        self.plt = Figure(figsize=(4, 4), dpi=100)
-        self.plt.add_subplot(111).plot([0,1, 2, 3, 4],[0,1,20,3,50])
-        self.frame = tk.Frame(parent)
-        self.frame.grid(sticky="NSEW")
-        self.main = Main(parent)
-
-        self.canvas = FigureCanvasTkAgg(self.plt, master=self.frame)
-        self.canvas.get_tk_widget().grid(row = 3, column = 0, sticky = tk.N, pady = 2, columnspan = 4)
-        self.canvas.draw()
