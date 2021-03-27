@@ -2,7 +2,7 @@
 Sammlung an Algorithmen und Spielereien
 
 # PCA
-- PCS in Form eines kleinen Programms mit GUI (genutzte Methoden: MVC und Observer-Pattern)
+- PCA in Form eines kleinen Programms mit GUI (genutzte Methoden: MVC und Observer-Pattern)
 
 # Template
 - stellt ein kleines Tempalte für Code-Challenges dar, sodass nur wenige Sachen geändert werden müssen, um mit der IDE zu programmieren
