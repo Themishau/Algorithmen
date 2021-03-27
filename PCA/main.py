@@ -2,5 +2,5 @@
 from GUI import *
 
 print("start")
-menu = Controller()
+menu = Controller('controller')
 menu.run()

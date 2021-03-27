@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import messagebox
-from analyze import readData, preprare_data
+from analyze import readData, preprare_data, createplot, analyze_data
 from observer import Publisher, Subscriber
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -15,7 +15,6 @@ import time
 class Model(Publisher):
     def __init__(self, events):
         super().__init__(events)
-        self.publisher = Publisher(events)
         self.input_data = None
         self.datadict = None
         self.dataarray = None
@@ -32,7 +31,7 @@ class Model(Publisher):
         self.dataarray = None
 
     def dataLoadedAndAvailable(self):
-        if (self.input_data == None):
+        if self.input_data == None:
             return False
         else:
             return True
@@ -44,7 +43,7 @@ class Model(Publisher):
 
     #reads the files
     async def read_data(self):
-        if (self.input_path == None):
+        if self.input_path == None:
             messagebox.showerror( 'Error', 'no path!')
             return
         self.input_data = await readData(self.input_path)
@@ -64,7 +63,7 @@ class Controller(Subscriber):
         self.root = tk.Tk()
 
         #init window size
-        self.root.geometry("600x650+200+200")
+        self.root.geometry("550x650+200+200")
         self.root.resizable(0, 0)
         #counts running threads
         self.runningAsync = 0
@@ -78,7 +77,10 @@ class Controller(Subscriber):
         self.view.register('start_button', self) # Achtung, sich selbst angeben und nicht self.controller
         self.view.register('close_button', self)
 
-
+    def update(self, event, message):
+        print(str(message) + str(event))
+        if event == 'start_button':
+            self.start_procedure(event)
 
     def run(self):
         self.root.title("show plot")
@@ -86,7 +88,8 @@ class Controller(Subscriber):
         self.root.deiconify()
         self.root.mainloop()
 
-    def start(self, event):
+    def start_procedure(self, event):
+        #todo model should notify viewer,
         self.view.hide_instance_attribute(self.view.canvas.get_tk_widget(), 'self.canvas.get_tk_widget()')
         try:
             self.model.input_path = self.view.main.input_path.get()
@@ -106,9 +109,7 @@ class Controller(Subscriber):
             messagebox.showerror('Error', 'could not clear data, restart program')
         self.do_tasks()
 
-        #todo am besten eine funktion starten, die diese infors kriegt und dann im view ändert
-        self.view.canvas = FigureCanvasTkAgg(self.model.fig, master=self.view.frame)
-        self.view.show_instance_attribute('self.view.canvas.get_tk_widget()')
+        self.view.update_plot()
 
 
     def closeprogram(self, event):
@@ -142,7 +143,8 @@ class Controller(Subscriber):
 
 class View(Publisher, Subscriber):
     def __init__(self, parent, model, events, name):
-        super(View, events).__init__(name)
+        Publisher.__init__(self, events)
+        Subscriber.__init__(self, name)
 
         #init viewer
         self.model = model
@@ -162,16 +164,12 @@ class View(Publisher, Subscriber):
         # hidden and shown widgets
         self.hiddenwidgets = {}
 
-
         self.main.mainStartButton.bind("<Button>", self.start)
         self.main.quitButton.bind("<Button>", self.closeprogram)
 
-
-    #todo hide und show auch in view verschieben
     def hide_instance_attribute(self, instance_attribute, widget_variablename):
         print(instance_attribute)
         self.hiddenwidgets[widget_variablename] = instance_attribute.grid_info()
-
         instance_attribute.grid_remove()
 
     def show_instance_attribute(self, widget_variablename):
@@ -191,10 +189,16 @@ class View(Publisher, Subscriber):
         self.dispatch("start_button", "start button clicked! Notify subscriber!")
 
     def closeprogram(self, event):
-        self.dispatch("close_button", "It's lunchtime!")
+        self.dispatch("close_button", "quit button clicked! Notify subscriber!")
 
     def closeprogrammenu(self):
-        self.dispatch("close_button", "It's lunchtime!")
+        self.dispatch("close_button", "quit button clicked! Notify subscriber!")
+
+    def update_plot(self):
+        #todo am besten eine funktion starten, die diese infors kriegt und dann im view ändert
+        self.canvas = FigureCanvasTkAgg(self.model.fig, master=self.frame)
+        self.show_instance_attribute('self.canvas.get_tk_widget()')
+
 
 class Main(tk.Frame):
     def __init__(self, root, **kw):
