@@ -107,8 +107,8 @@ class Controller(Subscriber):
             self.model.clearData()
         except ValueError:
             messagebox.showerror('Error', 'could not clear data, restart program')
-        self.do_tasks()
 
+        self.do_tasks()
         self.view.update_plot()
 
 

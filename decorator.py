@@ -2,8 +2,9 @@
 def function(func):
     def wrapper(*args, **kwargs):
         print('dec wrapper start')
-        func(*args, **kwargs)
+        value = func(*args, **kwargs)
         print('dec wrapper end')
+        return value
     return wrapper
 
 @function
@@ -11,6 +12,12 @@ def print_function(a, b="print_function"):
     print(a)
     print(b)
 
+# with return value
+@function
+def string_print_function(a, b):
+    if a.isalnum() and a.isalnum():
+        print(str(a) + ' ' + str(b))
+        return str(a) + ' ' + str(b)
 
 ### function wrapping ###
 def function_wrap(func):
