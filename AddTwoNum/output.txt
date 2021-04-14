@@ -1,0 +1,1 @@
+<__main__.ListNode object at 0x0000018284F28820>
