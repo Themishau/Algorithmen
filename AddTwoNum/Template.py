@@ -43,6 +43,17 @@ def read_node(list):
 
 
 def main(input = "input.txt", output = "output.txt"):
+    colours = ["red", "green", "yellow", "blue"]
+    things = ["house", "car", "tree"]
+    coloured_things1 = [(x + " " + y) for x in things for y in colours]
+    # for x in things:
+    #     for y in colours:
+    #         coloured_things1 = (x + " " + y)
+    coloured_things2 = [(x + " " + y) for x in colours for y in things]
+    # coloured_things = [(x, y) for x in things for y in colours]
+    print(coloured_things1)
+    print(coloured_things2)
+
     result = []
     lists = []
     solution = Solution()
