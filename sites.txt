@@ -1,0 +1,2 @@
+https://edabit.com/challenges
+https://leetcode.com/problemset/all/
